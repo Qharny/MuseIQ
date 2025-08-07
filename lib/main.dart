@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
-void main() => runApp(const MyApp());
+import 'package:museiq/screens/home_screen.dart';
+import 'package:museiq/screens/onboard.dart';
+import 'package:museiq/screens/splash.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,10 +10,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AI Music Player',
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(child: Text('AI Music Player Home')),
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      home: const SplashScreen(),
+      routes: {
+        '/onboarding': (context) => const OnboardingScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
+
