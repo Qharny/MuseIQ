@@ -1,25 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:museiq/models/song_model.dart';
 import 'package:museiq/screens/media_player_screen.dart';
+import 'package:museiq/services/audio_service.dart';
 
-class MiniPlayer extends StatelessWidget {
-  final bool isPlaying;
-  final String songTitle;
-  final String artistName;
+class MiniPlayer extends StatefulWidget {
   final VoidCallback? onTap;
 
-  const MiniPlayer({
-    Key? key,
-    this.isPlaying = false,
-    this.songTitle = 'No song playing',
-    this.artistName = 'Unknown Artist',
-    this.onTap,
-  }) : super(key: key);
+  const MiniPlayer({Key? key, this.onTap}) : super(key: key);
+
+  @override
+  State<MiniPlayer> createState() => _MiniPlayerState();
+}
+
+class _MiniPlayerState extends State<MiniPlayer> {
+  final AudioService _audioService = AudioService();
+  bool _isPlaying = false;
+  Song? _currentSong;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupAudioService();
+  }
+
+  void _setupAudioService() {
+    // Listen to player state changes
+    _audioService.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state.playing;
+        });
+      }
+    });
+
+    // Update current song
+    _updateCurrentSong();
+  }
+
+  void _updateCurrentSong() {
+    final currentSong = _audioService.currentSong;
+    if (mounted && currentSong != null) {
+      setState(() {
+        _currentSong = currentSong;
+      });
+    }
+  }
+
+  void _togglePlayPause() async {
+    try {
+      if (_isPlaying) {
+        await _audioService.pause();
+      } else {
+        if (_audioService.currentSong != null) {
+          await _audioService.play();
+        } else if (_audioService.songs.isNotEmpty) {
+          await _audioService.loadSongByIndex(0);
+          await _audioService.play();
+          _updateCurrentSong();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Don't show mini player if no song is loaded
+    if (_audioService.songs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final song = _currentSong ?? _audioService.songs.first;
+
     return GestureDetector(
       onTap:
-          onTap ??
+          widget.onTap ??
           () {
             Navigator.push(
               context,
@@ -67,7 +131,7 @@ class MiniPlayer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    songTitle,
+                    song.title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -78,7 +142,7 @@ class MiniPlayer extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    artistName,
+                    song.artist,
                     style: TextStyle(color: Colors.grey[400], fontSize: 12),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -89,24 +153,12 @@ class MiniPlayer extends StatelessWidget {
 
             // Play/Pause Button
             IconButton(
-              onPressed: () {
-                // Toggle play/pause
-                if (onTap != null) {
-                  onTap!();
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MusicPlayerScreen(),
-                    ),
-                  );
-                }
-              },
+              onPressed: _togglePlayPause,
               icon: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: Icon(
-                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  key: ValueKey(isPlaying),
+                  _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  key: ValueKey(_isPlaying),
                   color: Colors.white,
                   size: 28,
                 ),

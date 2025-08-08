@@ -74,6 +74,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.library_music, color: Colors.white),
+            onPressed: () {
+              Navigator.pushNamed(context, '/music-library');
+            },
+            tooltip: 'Music Library',
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {
               // Implement notifications
@@ -84,6 +91,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             onPressed: () {
               Navigator.pushNamed(context, '/controls-demo');
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.storage, color: Colors.white),
+            onPressed: () {
+              Navigator.pushNamed(context, '/storage-test');
+            },
+            tooltip: 'Storage Test',
           ),
         ],
       ),
@@ -106,11 +120,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Mini Player
-          const MiniPlayer(
-            isPlaying: false,
-            songTitle: 'AI Dreams',
-            artistName: 'Future Beats',
-          ),
+          const MiniPlayer(),
           // Bottom Navigation
           Container(
             decoration: BoxDecoration(

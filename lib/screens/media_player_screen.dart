@@ -1,5 +1,6 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:museiq/models/song_model.dart';
+import 'package:museiq/services/audio_service.dart';
 import 'package:museiq/widgets/music_player_controls.dart';
 
 class MusicPlayerScreen extends StatefulWidget {
@@ -11,7 +12,7 @@ class MusicPlayerScreen extends StatefulWidget {
 
 class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     with TickerProviderStateMixin {
-  late AudioPlayer _audioPlayer;
+  final AudioService _audioService = AudioService();
   late AnimationController _artworkController;
   late AnimationController _playButtonController;
   late Animation<double> _artworkAnimation;
@@ -25,15 +26,15 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
   Duration _currentPosition = Duration.zero;
   Duration _totalDuration = Duration.zero;
 
-  // Mock song data
-  final String _songTitle = "AI Dreams";
-  final String _artistName = "Future Beats";
-  final String _albumArt = "assets/images/Music-amico.png";
+  // Current song data
+  Song? _currentSong;
+  String _songTitle = "AI Dreams";
+  String _artistName = "Future Beats";
+  String _albumArt = "assets/images/Music-amico.png";
 
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
 
     // Initialize animations
     _artworkController = AnimationController(
@@ -55,54 +56,99 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     );
 
     _setupAudioPlayer();
+    _updateCurrentSong();
   }
 
   void _setupAudioPlayer() {
     // Listen to position changes
-    _audioPlayer.onPositionChanged.listen((position) {
-      setState(() {
-        _currentPosition = position;
-      });
+    _audioService.positionStream.listen((position) {
+      if (mounted && position != null) {
+        setState(() {
+          _currentPosition = position;
+        });
+      }
     });
 
     // Listen to duration changes
-    _audioPlayer.onDurationChanged.listen((duration) {
-      setState(() {
-        _totalDuration = duration;
-      });
+    _audioService.durationStream.listen((duration) {
+      if (mounted && duration != null) {
+        setState(() {
+          _totalDuration = duration;
+        });
+      }
     });
 
     // Listen to player state changes
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      setState(() {
-        _isPlaying = state == PlayerState.playing;
-      });
+    _audioService.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state.playing;
+        });
 
-      if (_isPlaying) {
-        _artworkController.repeat();
-        _playButtonController.forward();
-      } else {
-        _artworkController.stop();
-        _playButtonController.reverse();
+        if (_isPlaying) {
+          _artworkController.repeat();
+          _playButtonController.forward();
+        } else {
+          _artworkController.stop();
+          _playButtonController.reverse();
+        }
       }
     });
   }
 
+  void _updateCurrentSong() {
+    final currentSong = _audioService.currentSong;
+    if (currentSong != null) {
+      setState(() {
+        _currentSong = currentSong;
+        _songTitle = currentSong.title;
+        _artistName = currentSong.artist;
+        _albumArt = "assets/images/Music-amico.png"; // Default album art
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _audioPlayer.dispose();
     _artworkController.dispose();
     _playButtonController.dispose();
     super.dispose();
   }
 
   void _togglePlayPause() async {
-    if (_isPlaying) {
-      await _audioPlayer.pause();
-    } else {
-      // For demo purposes, play a sample audio file
-      // Replace with your actual audio file
-      await _audioPlayer.play(AssetSource('assets/songs/THE LIGHT.mp3'));
+    try {
+      if (_isPlaying) {
+        await _audioService.pause();
+      } else {
+        if (_audioService.currentSong != null) {
+          await _audioService.play();
+        } else {
+          // If no song is loaded, try to load the first available song
+          if (_audioService.songs.isNotEmpty) {
+            await _audioService.loadSongByIndex(0);
+            await _audioService.play();
+            _updateCurrentSong();
+          } else {
+            // Show message to user
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'No songs available. Please add music to your library.',
+                ),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -124,31 +170,39 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     });
   }
 
-  void _playPreviousTrack() {
-    // TODO: Implement previous track logic
-    // For now, just show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Previous track'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+  void _playPreviousTrack() async {
+    try {
+      await _audioService.playPrevious();
+      _updateCurrentSong();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error playing previous track: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
-  void _playNextTrack() {
-    // TODO: Implement next track logic
-    // For now, just show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Next track'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+  void _playNextTrack() async {
+    try {
+      await _audioService.playNext();
+      _updateCurrentSong();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error playing next track: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _seekTo(double value) {
     final position = Duration(seconds: value.toInt());
-    _audioPlayer.seek(position);
+    _audioService.seekTo(position);
   }
 
   String _formatDuration(Duration duration) {
