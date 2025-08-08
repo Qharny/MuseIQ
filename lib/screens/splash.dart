@@ -58,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen>
     _waveController.repeat();
 
     // Navigate after 3 seconds
-    // _navigateToNextScreen();
+    _navigateToNextScreen();
   }
 
   Future<void> _navigateToNextScreen() async {
