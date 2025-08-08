@@ -39,7 +39,7 @@ dependencies:
   shared_preferences: ^2.5.3
   just_audio: ^0.10.4
   just_audio_background: ^0.0.1-beta.17
-  flutter_ffmpeg: ^0.4.2
+#  flutter_ffmpeg: ^0.4.2
 
 dev_dependencies:
   flutter_test:
