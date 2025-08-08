@@ -3,12 +3,16 @@ import 'package:museiq/screens/home_screen.dart';
 import 'package:museiq/screens/onboard.dart';
 import 'package:museiq/screens/splash.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+void main(){
+  runApp(const museiq());
+}
+class museiq extends StatelessWidget {
+  const museiq({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'AI Music Player',
       theme: ThemeData(
         primarySwatch: Colors.purple,
