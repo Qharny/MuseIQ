@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:museiq/screens/media_player_screen.dart';
+import 'package:museiq/widgets/mini_player.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -77,6 +79,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               // Implement notifications
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.music_note, color: Colors.white),
+            onPressed: () {
+              Navigator.pushNamed(context, '/controls-demo');
+            },
+          ),
         ],
       ),
       body: PageView(
@@ -94,54 +102,66 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           SettingsTab(),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Mini Player
+          const MiniPlayer(
+            isPlaying: false,
+            songTitle: 'AI Dreams',
+            artistName: 'Future Beats',
+          ),
+          // Bottom Navigation
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFF1A1A1A),
-          selectedItemColor: const Color(0xFF4A148C),
-          unselectedItemColor: Colors.grey[600],
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.library_music_outlined),
-              activeIcon: Icon(Icons.library_music),
-              label: 'Music',
+            child: BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: const Color(0xFF1A1A1A),
+              selectedItemColor: const Color(0xFF4A148C),
+              unselectedItemColor: Colors.grey[600],
+              selectedFontSize: 12,
+              unselectedFontSize: 12,
+              currentIndex: _currentIndex,
+              onTap: _onTabTapped,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.library_music_outlined),
+                  activeIcon: Icon(Icons.library_music),
+                  label: 'Music',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.auto_awesome_outlined),
+                  activeIcon: Icon(Icons.auto_awesome),
+                  label: 'Discover',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.mic_outlined),
+                  activeIcon: Icon(Icons.mic),
+                  label: 'Assistant',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.folder_outlined),
+                  activeIcon: Icon(Icons.folder),
+                  label: 'Playlists',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings_outlined),
+                  activeIcon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              activeIcon: Icon(Icons.auto_awesome),
-              label: 'Discover',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.mic_outlined),
-              activeIcon: Icon(Icons.mic),
-              label: 'Assistant',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.folder_outlined),
-              activeIcon: Icon(Icons.folder),
-              label: 'Playlists',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -178,6 +198,7 @@ class MusicTab extends StatelessWidget {
                   width: 160,
                   margin: const EdgeInsets.only(right: 12),
                   child: _buildAlbumCard(
+                    context,
                     'Album ${index + 1}',
                     'Artist Name',
                     Colors.primaries[index % Colors.primaries.length],
@@ -205,6 +226,7 @@ class MusicTab extends StatelessWidget {
             itemCount: 10,
             itemBuilder: (context, index) {
               return _buildSongTile(
+                context,
                 'Song Title ${index + 1}',
                 'Artist Name',
                 '3:45',
@@ -217,66 +239,76 @@ class MusicTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAlbumCard(String title, String artist, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.3),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+  Widget _buildAlbumCard(
+    BuildContext context,
+    String title,
+    String artist,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MusicPlayerScreen()),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.3),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Center(child: Icon(Icons.album, size: 50, color: color)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    artist,
+                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            child: Center(
-              child: Icon(
-                Icons.album,
-                size: 50,
-                color: color,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  artist,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSongTile(String title, String artist, String duration, Color color) {
+  Widget _buildSongTile(
+    BuildContext context,
+    String title,
+    String artist,
+    String duration,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -307,7 +339,12 @@ class MusicTab extends StatelessWidget {
         trailing: IconButton(
           icon: const Icon(Icons.play_arrow, color: Colors.white),
           onPressed: () {
-            // Play song
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MusicPlayerScreen(),
+              ),
+            );
           },
         ),
       ),
@@ -358,14 +395,18 @@ class DiscoverTab extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Text(
                   'Currently detecting: Energetic & Focused',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MusicPlayerScreen(),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF4A148C),
@@ -399,10 +440,25 @@ class DiscoverTab extends StatelessWidget {
             ),
             itemCount: 6,
             itemBuilder: (context, index) {
-              final moods = ['Energetic', 'Chill', 'Focus', 'Party', 'Sleep', 'Workout'];
-              final colors = [Colors.orange, Colors.blue, Colors.green, Colors.pink, Colors.purple, Colors.red];
+              final moods = [
+                'Energetic',
+                'Chill',
+                'Focus',
+                'Party',
+                'Sleep',
+                'Workout',
+              ];
+              final colors = [
+                Colors.orange,
+                Colors.blue,
+                Colors.green,
+                Colors.pink,
+                Colors.purple,
+                Colors.red,
+              ];
 
               return _buildMoodCard(
+                context,
                 moods[index],
                 '${15 + (index * 5)} songs',
                 colors[index],
@@ -414,80 +470,88 @@ class DiscoverTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMoodCard(String mood, String songCount, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+  Widget _buildMoodCard(
+    BuildContext context,
+    String mood,
+    String songCount,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MusicPlayerScreen()),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.mood,
-                  size: 50,
-                  color: color,
-                ),
+                child: Center(child: Icon(Icons.mood, size: 50, color: color)),
               ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    mood,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    songCount,
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 12,
-                    ),
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mood,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: const Text(
-                        'Play',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      songCount,
+                      style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MusicPlayerScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: color,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text(
+                          'Play',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -505,7 +569,8 @@ class _AssistantTabState extends State<AssistantTab> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [
     ChatMessage(
-      text: "Hi! I'm your AI music assistant. Ask me to play songs, recommend music, or create playlists!",
+      text:
+          "Hi! I'm your AI music assistant. Ask me to play songs, recommend music, or create playlists!",
       isUser: false,
     ),
   ];
@@ -515,10 +580,12 @@ class _AssistantTabState extends State<AssistantTab> {
 
     setState(() {
       _messages.add(ChatMessage(text: _messageController.text, isUser: true));
-      _messages.add(ChatMessage(
-        text: "I'd love to help you with that! This is a demo response.",
-        isUser: false,
-      ));
+      _messages.add(
+        ChatMessage(
+          text: "I'd love to help you with that! This is a demo response.",
+          isUser: false,
+        ),
+      );
     });
 
     _messageController.clear();
@@ -547,6 +614,7 @@ class _AssistantTabState extends State<AssistantTab> {
                 children: [
                   Expanded(
                     child: _buildQuickActionButton(
+                      context,
                       'Surprise Me',
                       Icons.shuffle,
                       const Color(0xFF00E5FF),
@@ -555,6 +623,7 @@ class _AssistantTabState extends State<AssistantTab> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildQuickActionButton(
+                      context,
                       'Voice Command',
                       Icons.mic,
                       const Color(0xFF4A148C),
@@ -628,17 +697,25 @@ class _AssistantTabState extends State<AssistantTab> {
     );
   }
 
-  Widget _buildQuickActionButton(String text, IconData icon, Color color) {
+  Widget _buildQuickActionButton(
+    BuildContext context,
+    String text,
+    IconData icon,
+    Color color,
+  ) {
     return ElevatedButton.icon(
-      onPressed: () {},
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MusicPlayerScreen()),
+        );
+      },
       icon: Icon(icon, size: 20),
       label: Text(text),
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         padding: const EdgeInsets.symmetric(vertical: 12),
       ),
     );
@@ -648,7 +725,9 @@ class _AssistantTabState extends State<AssistantTab> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
             Container(
@@ -658,7 +737,11 @@ class _AssistantTabState extends State<AssistantTab> {
                 color: const Color(0xFF4A148C),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.psychology, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.psychology,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
           ],
@@ -666,15 +749,14 @@ class _AssistantTabState extends State<AssistantTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: message.isUser ? const Color(0xFF4A148C) : const Color(0xFF1A1A1A),
+                color: message.isUser
+                    ? const Color(0xFF4A148C)
+                    : const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Text(
                 message.text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ),
@@ -749,12 +831,19 @@ class PlaylistsTab extends StatelessWidget {
             itemCount: 8,
             itemBuilder: (context, index) {
               final playlistNames = [
-                'Liked Songs', 'Workout Hits', 'Chill Vibes', 'Focus Flow',
-                'Party Mix', 'Sleep Sounds', 'Road Trip', 'Study Time'
+                'Liked Songs',
+                'Workout Hits',
+                'Chill Vibes',
+                'Focus Flow',
+                'Party Mix',
+                'Sleep Sounds',
+                'Road Trip',
+                'Study Time',
               ];
               final songCounts = [156, 43, 67, 89, 92, 23, 78, 45];
 
               return _buildPlaylistTile(
+                context,
                 playlistNames[index % playlistNames.length],
                 songCounts[index % songCounts.length],
                 Colors.primaries[index % Colors.primaries.length],
@@ -766,39 +855,52 @@ class PlaylistsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaylistTile(String name, int songCount, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(8),
+  Widget _buildPlaylistTile(
+    BuildContext context,
+    String name,
+    int songCount,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MusicPlayerScreen()),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(12),
+          leading: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.playlist_play, color: color, size: 30),
           ),
-          child: Icon(Icons.playlist_play, color: color, size: 30),
-        ),
-        title: Text(
-          name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+          title: Text(
+            name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        subtitle: Text(
-          '$songCount songs',
-          style: TextStyle(color: Colors.grey[400]),
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
-          onPressed: () {},
+          subtitle: Text(
+            '$songCount songs',
+            style: TextStyle(color: Colors.grey[400]),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onPressed: () {},
+          ),
         ),
       ),
     );
@@ -906,12 +1008,12 @@ class SettingsTab extends StatelessWidget {
   }
 
   Widget _buildSettingsTile(
-      String title,
-      String subtitle,
-      IconData icon,
-      bool? switchValue, {
-        VoidCallback? onTap,
-      }) {
+    String title,
+    String subtitle,
+    IconData icon,
+    bool? switchValue, {
+    VoidCallback? onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -927,16 +1029,13 @@ class SettingsTab extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(color: Colors.grey[400]),
-        ),
+        subtitle: Text(subtitle, style: TextStyle(color: Colors.grey[400])),
         trailing: switchValue != null
             ? Switch(
-          value: switchValue,
-          onChanged: (value) {},
-          activeColor: const Color(0xFF4A148C),
-        )
+                value: switchValue,
+                onChanged: (value) {},
+                activeColor: const Color(0xFF4A148C),
+              )
             : const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
         onTap: onTap,
       ),

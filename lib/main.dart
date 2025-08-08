@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:museiq/screens/controls_demo.dart';
 import 'package:museiq/screens/home_screen.dart';
+import 'package:museiq/screens/media_player_screen.dart';
 import 'package:museiq/screens/onboard.dart';
 import 'package:museiq/screens/splash.dart';
 
-void main(){
+void main() {
   runApp(const museiq());
 }
+
 class museiq extends StatelessWidget {
   const museiq({super.key});
 
@@ -22,8 +25,9 @@ class museiq extends StatelessWidget {
       routes: {
         '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const HomeScreen(),
+        '/media-player': (context) => const MusicPlayerScreen(),
+        '/controls-demo': (context) => const ControlsDemoScreen(),
       },
     );
   }
 }
-

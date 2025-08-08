@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:museiq/widgets/music_player_controls.dart';
 
 class MusicPlayerScreen extends StatefulWidget {
   const MusicPlayerScreen({Key? key}) : super(key: key);
@@ -27,8 +28,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
   // Mock song data
   final String _songTitle = "AI Dreams";
   final String _artistName = "Future Beats";
-  final String _albumArt =
-      "assets/images/album_art.png"; // Replace with actual asset
+  final String _albumArt = "assets/images/Music-amico.png";
 
   @override
   void initState() {
@@ -102,7 +102,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     } else {
       // For demo purposes, play a sample audio file
       // Replace with your actual audio file
-      await _audioPlayer.play(AssetSource('audio/sample.mp3'));
+      await _audioPlayer.play(AssetSource('assets/songs/THE LIGHT.mp3'));
     }
   }
 
@@ -122,6 +122,28 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     setState(() {
       _isLiked = !_isLiked;
     });
+  }
+
+  void _playPreviousTrack() {
+    // TODO: Implement previous track logic
+    // For now, just show a snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Previous track'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _playNextTrack() {
+    // TODO: Implement next track logic
+    // For now, just show a snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Next track'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   void _seekTo(double value) {
@@ -163,6 +185,13 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
               ? _buildLandscapeLayout(screenWidth, screenHeight)
               : _buildPortraitLayout(screenWidth, screenHeight),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        },
+        backgroundColor: const Color(0xFF4A148C),
+        child: const Icon(Icons.home, color: Colors.white),
       ),
     );
   }
@@ -430,98 +459,21 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
   }
 
   Widget _buildPlaybackControls(double width) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        // Shuffle
-        IconButton(
-          onPressed: _toggleShuffle,
-          icon: Icon(
-            Icons.shuffle_rounded,
-            color: _isShuffle
-                ? const Color(0xFF00E5FF)
-                : Colors.white.withOpacity(0.6),
-            size: 24,
-          ),
-        ),
-
-        // Previous
-        IconButton(
-          onPressed: () {
-            // Previous track logic
-          },
-          icon: const Icon(
-            Icons.skip_previous_rounded,
-            color: Colors.white,
-            size: 32,
-          ),
-        ),
-
-        // Play/Pause (Large)
-        AnimatedBuilder(
-          animation: _playButtonAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _playButtonAnimation.value,
-              child: Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00E5FF), Color(0xFF3F51B5)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00E5FF).withOpacity(0.4),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  onPressed: _togglePlayPause,
-                  icon: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      _isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                      key: ValueKey(_isPlaying),
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-
-        // Next
-        IconButton(
-          onPressed: () {
-            // Next track logic
-          },
-          icon: const Icon(
-            Icons.skip_next_rounded,
-            color: Colors.white,
-            size: 32,
-          ),
-        ),
-
-        // Loop
-        IconButton(
-          onPressed: _toggleLoop,
-          icon: Icon(
-            Icons.repeat_rounded,
-            color: _isLoop
-                ? const Color(0xFF00E5FF)
-                : Colors.white.withOpacity(0.6),
-            size: 24,
-          ),
-        ),
-      ],
+    return MusicPlayerControls(
+      isPlaying: _isPlaying,
+      isShuffleEnabled: _isShuffle,
+      isRepeatEnabled: _isLoop,
+      onPlayPause: _togglePlayPause,
+      onPrevious: () {
+        // Previous track logic
+        _playPreviousTrack();
+      },
+      onNext: () {
+        // Next track logic
+        _playNextTrack();
+      },
+      onShuffle: _toggleShuffle,
+      onRepeat: _toggleLoop,
     );
   }
 
