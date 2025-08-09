@@ -101,9 +101,9 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF4A148C), // Deep purple
-              Color(0xFF2C1810), // Dark purple-brown
-              Color(0xFF0D0D0D), // Almost black
+              Color(0xFF4A148C),
+              Color(0xFF2C1810),
+              Color(0xFF0D0D0D),
             ],
             stops: [0.0, 0.6, 1.0],
           ),
