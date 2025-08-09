@@ -39,7 +39,7 @@ class AudioService {
     if (_isInitialized) return;
 
     try {
-      // Request storage permissions
+      // Request storage/media permissions
       await _requestPermissions();
       _isInitialized = true;
     } catch (e) {
@@ -51,10 +51,43 @@ class AudioService {
   // Request necessary permissions
   Future<void> _requestPermissions() async {
     if (Platform.isAndroid) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        throw Exception('Storage permission is required to access music files');
+      // On Android 13+ storage permission is split into media-specific ones.
+      // Try requesting audio/media first, then fall back to legacy storage
+      // on older Android versions.
+      PermissionStatus audioStatus = PermissionStatus.denied;
+      PermissionStatus storageStatus = PermissionStatus.denied;
+
+      // Request audio/media permission (READ_MEDIA_AUDIO on Android 13+)
+      try {
+        audioStatus = await Permission.audio.request();
+      } catch (_) {
+        // Some devices/older plugin versions might not support this; ignore.
       }
+
+      if (audioStatus.isGranted) {
+        return;
+      }
+
+      // Fallback: legacy external storage (READ_EXTERNAL_STORAGE) for <= Android 12
+      try {
+        storageStatus = await Permission.storage.request();
+      } catch (_) {}
+
+      if (storageStatus.isGranted) {
+        return;
+      }
+
+      // If both denied or permanently denied, surface a clear error
+      if (audioStatus.isPermanentlyDenied ||
+          storageStatus.isPermanentlyDenied) {
+        throw Exception(
+          'Permission permanently denied. Enable "Music and audio" (or Storage) in system Settings > Apps > MuseIQ > Permissions.',
+        );
+      }
+
+      throw Exception(
+        'Audio/Storage permission is required to access music files',
+      );
     }
   }
 
@@ -141,7 +174,6 @@ class AudioService {
   Future<Song?> _createSongFromFile(File file) async {
     try {
       final fileName = path.basenameWithoutExtension(file.path);
-      final fileSize = await file.length();
 
       // Basic song creation with file info
       final song = Song(
