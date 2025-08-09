@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:museiq/models/song_model.dart';
 import 'package:museiq/services/audio_service.dart';
+import 'package:museiq/services/prefs_service.dart';
 import 'package:museiq/widgets/music_player_controls.dart';
 
 class MusicPlayerScreen extends StatefulWidget {
@@ -94,6 +95,14 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
         }
       }
     });
+
+    // Restore shuffle/repeat from preferences
+    PrefsService.getShuffleEnabled().then((v) {
+      if (mounted) setState(() => _isShuffle = v);
+    });
+    PrefsService.getRepeatEnabled().then((v) {
+      if (mounted) setState(() => _isLoop = v);
+    });
   }
 
   void _updateCurrentSong() {
@@ -103,7 +112,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
         _currentSong = currentSong;
         _songTitle = currentSong.title;
         _artistName = currentSong.artist;
-        _albumArt = "assets/images/Music-amico.png"; // Default album art
+        _albumArt = "assets/images/Music-amico.png";
       });
     }
   }
@@ -156,12 +165,14 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     setState(() {
       _isShuffle = !_isShuffle;
     });
+    PrefsService.setShuffleEnabled(_isShuffle);
   }
 
   void _toggleLoop() {
     setState(() {
       _isLoop = !_isLoop;
     });
+    PrefsService.setRepeatEnabled(_isLoop);
   }
 
   void _toggleLike() {

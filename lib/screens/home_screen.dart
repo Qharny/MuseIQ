@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:museiq/screens/media_player_screen.dart';
+import 'package:museiq/services/prefs_service.dart';
 import 'package:museiq/widgets/mini_player.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,6 +32,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       vsync: this,
     );
     _fadeController.forward();
+
+    // Restore last selected tab
+    PrefsService.getLastHomeTabIndex().then((value) {
+      if (!mounted) return;
+      setState(() {
+        _currentIndex = value;
+      });
+      _pageController.jumpToPage(value);
+    });
   }
 
   @override
@@ -44,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _currentIndex = index;
     });
+    PrefsService.setLastHomeTabIndex(index);
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),

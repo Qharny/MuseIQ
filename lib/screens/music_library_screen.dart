@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../models/song_model.dart';
-import '../services/audio_service.dart';
 import '../screens/media_player_screen.dart';
+import '../services/audio_service.dart';
+import '../services/prefs_service.dart';
 
 class MusicLibraryScreen extends StatefulWidget {
   const MusicLibraryScreen({super.key});
@@ -20,6 +22,19 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
   void initState() {
     super.initState();
     _initializeAudioService();
+    _restorePersistedLibrary();
+  }
+
+  Future<void> _restorePersistedLibrary() async {
+    try {
+      final paths = await PrefsService.getLibraryPaths();
+      if (paths.isEmpty) return;
+      final added = await _audioService.addSongsFromPaths(paths);
+      if (!mounted) return;
+      setState(() {
+        _songs = List<Song>.from(added);
+      });
+    } catch (_) {}
   }
 
   Future<void> _initializeAudioService() async {
@@ -52,7 +67,9 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
         _songs = songs;
         _isLoading = false;
       });
-      
+      // Persist library paths
+      await PrefsService.setLibraryPaths(songs.map((s) => s.filePath).toList());
+
       if (songs.isEmpty) {
         _showInfoSnackBar('No music files found. Try picking files manually.');
       } else {
@@ -77,7 +94,12 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
         _songs = songs;
         _isLoading = false;
       });
-      
+      if (songs.isNotEmpty) {
+        await PrefsService.setLibraryPaths(
+          songs.map((s) => s.filePath).toList(),
+        );
+      }
+
       if (songs.isNotEmpty) {
         _showSuccessSnackBar('Added ${songs.length} music files');
       }
@@ -93,13 +115,11 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
     try {
       await _audioService.loadSong(song);
       await _audioService.play();
-      
+
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const MusicPlayerScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const MusicPlayerScreen()),
         );
       }
     } catch (e) {
@@ -176,13 +196,11 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF4A148C),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFF4A148C)),
             )
           : _songs.isEmpty
-              ? _buildEmptyState()
-              : _buildSongList(),
+          ? _buildEmptyState()
+          : _buildSongList(),
     );
   }
 
@@ -191,11 +209,7 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.music_note,
-            size: 80,
-            color: Colors.grey[600],
-          ),
+          Icon(Icons.music_note, size: 80, color: Colors.grey[600]),
           const SizedBox(height: 16),
           Text(
             'No Music Found',
@@ -208,10 +222,7 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
           const SizedBox(height: 8),
           Text(
             'Scan your device for music files or pick files manually',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -225,7 +236,10 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A148C),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
               ),
               ElevatedButton.icon(
@@ -235,7 +249,10 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A148C),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -282,20 +299,14 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
               children: [
                 Text(
                   song.artist,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[400], fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (song.album != null)
                   Text(
                     song.album!,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -306,18 +317,12 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
               children: [
                 Text(
                   _formatDuration(song.duration),
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: () => _playSong(song),
-                  icon: const Icon(
-                    Icons.play_arrow,
-                    color: Color(0xFF4A148C),
-                  ),
+                  icon: const Icon(Icons.play_arrow, color: Color(0xFF4A148C)),
                 ),
               ],
             ),
@@ -327,4 +332,4 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
       },
     );
   }
-} 
+}

@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
 
 import '../models/song_model.dart';
+import 'prefs_service.dart';
 
 class AudioService {
   static final AudioService _instance = AudioService._internal();
@@ -41,10 +42,41 @@ class AudioService {
     try {
       // Request storage/media permissions
       await _requestPermissions();
+      // Restore persisted audio state
+      await _restoreAudioPreferences();
       _isInitialized = true;
     } catch (e) {
       print('Error initializing AudioService: $e');
       rethrow;
+    }
+  }
+
+  Future<void> _restoreAudioPreferences() async {
+    try {
+      final savedVolume = await PrefsService.getVolume();
+      if (savedVolume != null) {
+        await _audioPlayer.setVolume(savedVolume.clamp(0.0, 1.0));
+      }
+
+      // Attempt to restore last song and position
+      final lastPath = await PrefsService.getLastSongPath();
+      final lastPosMs = await PrefsService.getLastPositionMs();
+      if (lastPath != null && File(lastPath).existsSync()) {
+        final restored = await _createSongFromFile(File(lastPath));
+        if (restored != null) {
+          // Ensure song list contains this track
+          if (!_songs.any((s) => s.filePath == lastPath)) {
+            _songs.insert(0, restored);
+          }
+          await loadSong(restored);
+          if (lastPosMs > 0) {
+            await _audioPlayer.seek(Duration(milliseconds: lastPosMs));
+          }
+        }
+      }
+    } catch (e) {
+      // Non-fatal
+      print('Failed to restore audio preferences: $e');
     }
   }
 
@@ -126,6 +158,28 @@ class AudioService {
       print('Error scanning system music: $e');
       return [];
     }
+  }
+
+  // Rebuild/add songs from file paths (used for restoring library)
+  Future<List<Song>> addSongsFromPaths(List<String> filePaths) async {
+    if (!_isInitialized) await initialize();
+    final added = <Song>[];
+    for (final p in filePaths) {
+      try {
+        final file = File(p);
+        if (!await file.exists()) continue;
+        final ext = path.extension(p).toLowerCase();
+        if (!_isAudioFile(ext)) continue;
+        final song = await _createSongFromFile(file);
+        if (song != null && !_songs.any((s) => s.filePath == song.filePath)) {
+          _songs.add(song);
+          added.add(song);
+        }
+      } catch (e) {
+        // Skip invalid files
+      }
+    }
+    return added;
   }
 
   // Scan a specific directory for music files
@@ -231,6 +285,8 @@ class AudioService {
     try {
       await _audioPlayer.setFilePath(song.filePath);
       _currentIndex = _songs.indexOf(song);
+      // Persist last played track
+      await PrefsService.setLastSongPath(song.filePath);
     } catch (e) {
       print('Error loading song: $e');
       rethrow;
@@ -258,6 +314,8 @@ class AudioService {
   Future<void> pause() async {
     try {
       await _audioPlayer.pause();
+      // Persist position when pausing
+      await _persistCurrentPosition();
     } catch (e) {
       print('Error pausing song: $e');
       rethrow;
@@ -268,6 +326,7 @@ class AudioService {
   Future<void> stop() async {
     try {
       await _audioPlayer.stop();
+      await _persistCurrentPosition();
     } catch (e) {
       print('Error stopping song: $e');
       rethrow;
@@ -278,6 +337,7 @@ class AudioService {
   Future<void> seekTo(Duration position) async {
     try {
       await _audioPlayer.seek(position);
+      await PrefsService.setLastPositionMs(position.inMilliseconds);
     } catch (e) {
       print('Error seeking: $e');
       rethrow;
@@ -306,6 +366,7 @@ class AudioService {
   Future<void> setVolume(double volume) async {
     try {
       await _audioPlayer.setVolume(volume.clamp(0.0, 1.0));
+      await PrefsService.setVolume(volume.clamp(0.0, 1.0));
     } catch (e) {
       print('Error setting volume: $e');
       rethrow;
@@ -323,6 +384,7 @@ class AudioService {
 
   // Dispose resources
   Future<void> dispose() async {
+    await _persistCurrentPosition();
     await _audioPlayer.dispose();
     _songs.clear();
     _currentIndex = -1;
@@ -349,5 +411,12 @@ class AudioService {
         _currentIndex = _songs.length - 1;
       }
     }
+  }
+
+  Future<void> _persistCurrentPosition() async {
+    try {
+      final pos = _audioPlayer.position;
+      await PrefsService.setLastPositionMs(pos.inMilliseconds);
+    } catch (_) {}
   }
 }
