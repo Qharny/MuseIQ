@@ -459,15 +459,3 @@ class OnboardingData {
   });
 }
 
-// Add to your pubspec.yaml:
-/*
-dependencies:
-  flutter:
-    sdk: flutter
-  flutter_svg: ^2.0.9
-
-# Add your assets
-flutter:
-  assets:
-    - assets/images/
-*/
